@@ -98,8 +98,9 @@ jobs:
       - name: Sync spec docs into repo (Spec-Kit layout)
         run: |
           set -euxo pipefail
-          SRC="specs/${SPEC_ID}-${SLUG}"
-          DST="target/specs/$(printf "%03d" ${SPEC_ID})-${SLUG}"
+          PADDED_ID=$(printf "%03d" ${SPEC_ID})
+          SRC="specs/${PADDED_ID}-${SLUG}"
+          DST="target/specs/${PADDED_ID}-${SLUG}"
           test -d "$SRC" || { echo "Spec folder not found: $SRC"; exit 1; }
           mkdir -p "$DST"
           rsync -a "$SRC/" "$DST/"
@@ -119,9 +120,14 @@ jobs:
       - name: Commit and push
         working-directory: target
         run: |
+          set -euxo pipefail
           git add .
-          git commit -m "chore(spec): ${SPEC_ID}-${SLUG} sync spec docs and config"
-          git push -u origin "$BRANCH"
+          if git diff --cached --quiet; then
+            echo "No changes to commit; pushing branch to set upstream"
+          else
+            git commit -m "chore(spec): ${SPEC_ID}-${SLUG} sync spec docs and config"
+          fi
+          git push -u origin "$BRANCH" || true
 
       - name: Open Draft PR
         uses: peter-evans/create-pull-request@v6
