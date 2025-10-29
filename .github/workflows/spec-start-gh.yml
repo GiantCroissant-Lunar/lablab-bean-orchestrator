@@ -59,6 +59,11 @@ jobs:
           ).split(",") if r.strip()]; print(json.dumps({"include":[{"repo":r} for r in repos]}))')
           echo "matrix=$JSON" >> $GITHUB_OUTPUT
 
+      - name: Debug inputs and matrix
+        run: |
+          echo "SPEC_ID=${SPEC_ID} SLUG=${SLUG} BASE=${BASE} ORG=${ORG}"
+          echo "Matrix: ${{ steps.set-matrix.outputs.matrix }}"
+
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
 
