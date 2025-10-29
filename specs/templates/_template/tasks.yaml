@@ -16,4 +16,3 @@
   type: code
   detail: |
     Add `bean login` command to call core API and store token.
-

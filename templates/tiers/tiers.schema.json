@@ -37,4 +37,3 @@
   "required": ["tiers"],
   "additionalProperties": false
 }
-

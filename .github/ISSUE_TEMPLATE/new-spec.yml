@@ -44,4 +44,3 @@ body:
       placeholder: lablab-bean,lablab-bean-console
     validations:
       required: true
-

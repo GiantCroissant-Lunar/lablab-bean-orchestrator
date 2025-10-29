@@ -106,4 +106,3 @@ jobs:
           body: |
             Spec created via workflow dispatch by @${{ github.actor }}.
           labels: spec, proposed
-

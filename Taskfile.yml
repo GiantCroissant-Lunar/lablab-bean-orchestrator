@@ -86,4 +86,3 @@ tasks:
       STAGE: implement
     cmds:
       - python3 scripts/py/spec_kit_compat.py add-task --spec "{{.SPEC}}" --slug "{{.SLUG}}" --repo "{{.REPO}}" --title "{{.TITLE}}" --detail "{{.DETAIL}}" --stage "{{.STAGE}}"
-

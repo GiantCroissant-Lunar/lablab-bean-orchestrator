@@ -32,4 +32,3 @@ tasks:
     desc: Install pre-commit hook
     cmds:
       - pre-commit install
-

@@ -31,4 +31,3 @@ if errs:
     sys.exit(1)
 
 print('EditorSettings serialization + visible meta OK')
-

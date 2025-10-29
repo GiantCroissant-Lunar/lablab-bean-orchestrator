@@ -60,4 +60,3 @@ if __name__ == "__main__":
     graph = build_graph()
     out = graph.invoke({"spec_id": "123", "slug": "example"})
     print(out)
-

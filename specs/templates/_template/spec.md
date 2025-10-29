@@ -14,4 +14,3 @@ Acceptance Criteria
 
 Notes
 - Links, references, constraints.
-

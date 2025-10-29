@@ -38,4 +38,3 @@ if large_not_lfs:
     sys.exit(1)
 
 print('LFS check OK')
-

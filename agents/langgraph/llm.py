@@ -26,4 +26,3 @@ def call_llm(messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
         return {"role": choice.role, "content": choice.content}
     except Exception as e:
         return {"role": "assistant", "content": f"[error calling LLM] {e}"}
-

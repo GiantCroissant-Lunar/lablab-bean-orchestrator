@@ -17,4 +17,3 @@ Specs live here as folders with metadata and a primary spec document. Create the
 ## Create a Spec
 - GitHub → New Issue → “New Spec” template; then run verify/start in Actions.
 - Or import from an existing repo using `scripts/py/import_specs.py` and Task.
-

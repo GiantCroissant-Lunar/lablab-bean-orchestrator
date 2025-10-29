@@ -1,4 +1,4 @@
-name: Spec Dry Run
+name: Spec Dry Run Manual
 
 on:
   workflow_dispatch:
@@ -10,32 +10,17 @@ on:
         description: "Base branch"
         required: false
         default: "main"
-  issue_comment:
-    types: [created]
 
 jobs:
   prepare:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
-      repos: ${{ steps.parse-comment.outputs.repos }}
-      base: ${{ steps.parse-comment.outputs.base }}
     steps:
       - uses: actions/checkout@v4
-      - name: Parse comment (optional)
-        id: parse-comment
-        if: github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/spec dryrun')
-        run: |
-          BODY="${{ github.event.comment.body }}"
-          REPOS=$(echo "$BODY" | sed -n 's/.*repos=\([^ ]*\).*/\1/p')
-          BASE=$(echo "$BODY" | sed -n 's/.*base=\([^ ]*\).*/\1/p')
-          if [ -z "$REPOS" ]; then echo "repos not found in comment"; exit 1; fi
-          echo "repos=$REPOS" >> $GITHUB_OUTPUT
-          echo "base=${BASE:-main}" >> $GITHUB_OUTPUT
       - id: set-matrix
         run: |
           REPOS='${{ inputs.repos }}'
-          if [ "${{ github.event_name }}" = "issue_comment" ]; then REPOS='${{ steps.parse-comment.outputs.repos }}'; fi
           JSON=$(python3 - <<'PY'
 import os, json
 repos = [r.strip() for r in os.environ['REPOS'].split(',') if r.strip()]
@@ -55,9 +40,6 @@ PY
       REPO: ${{ matrix.repo }}
       BASE: ${{ inputs.base_branch }}
     steps:
-      - name: Override base for comment
-        if: github.event_name == 'issue_comment'
-        run: echo "BASE=${{ needs.prepare.outputs.base }}" >> $GITHUB_ENV
       - name: Check base branch exists
         run: |
           git ls-remote --heads https://github.com/${ORG}/${REPO}.git ${BASE} | grep -q "refs/heads/${BASE}" || { echo "Missing base branch ${BASE} on ${REPO}"; exit 1; }
@@ -68,15 +50,13 @@ PY
         run: |
           test -n "$GH_TOKEN" || { echo "LABLAB_GH_PAT secret not set"; exit 1; }
           curl -s -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/${ORG}/${REPO} > resp.json
-          echo "Response snippet:" && cat resp.json | sed -n '1,40p'
           python3 - <<'PY'
-import json
-data=json.load(open('resp.json'))
+import json, sys
+with open('resp.json','r') as f:
+  data=json.load(f)
 perms=data.get('permissions') or {}
 if not perms.get('push', False):
-    raise SystemExit('Token does not have push permission for this repo')
+  print('Token does not have push permission for this repo')
+  sys.exit(1)
 print('Push permission OK')
 PY
-
-      - name: Report success for repo
-        run: echo "Dry-run OK for ${REPO}"

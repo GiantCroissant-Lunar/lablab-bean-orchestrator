@@ -4,4 +4,3 @@
 - [ ] T002 Describe second task
 
 <!-- Replace with real tasks following your plan. -->
-

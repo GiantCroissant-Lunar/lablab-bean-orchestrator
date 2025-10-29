@@ -16,6 +16,8 @@ on:
         description: "Base branch"
         required: false
         default: "main"
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: write
@@ -41,6 +43,17 @@ jobs:
         id: set-matrix
         run: |
           REPOS='${{ inputs.repos }}'
+          if [ "${{ github.event_name }}" = "issue_comment" ]; then
+            BODY="${{ github.event.comment.body }}"
+            SID=$(echo "$BODY" | sed -n 's/.*spec_id=\([^ ]*\).*/\1/p')
+            SL=$(echo "$BODY" | sed -n 's/.*slug=\([^ ]*\).*/\1/p')
+            RS=$(echo "$BODY" | sed -n 's/.*repos=\([^ ]*\).*/\1/p')
+            BB=$(echo "$BODY" | sed -n 's/.*base=\([^ ]*\).*/\1/p')
+            if [ -n "$SID" ]; then echo "SPEC_ID=$SID" >> $GITHUB_ENV; fi
+            if [ -n "$SL" ]; then echo "SLUG=$SL" >> $GITHUB_ENV; fi
+            if [ -n "$BB" ]; then echo "BASE=$BB" >> $GITHUB_ENV; fi
+            if [ -n "$RS" ]; then REPOS="$RS"; fi
+          fi
           # Produce a JSON array for matrix
           JSON=$(python3 - <<'PY'
 import json, os

@@ -39,4 +39,3 @@ if err:
     sys.exit(1)
 
 print('Unity meta pairing OK')
-

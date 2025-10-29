@@ -1,4 +1,22 @@
 {
-  "specs": []
+  "specs": [
+    {
+      "id": 1,
+      "slug": "2025-10-28-claude-task-master-vs-spec-kit-comparison-doc-2025-00085",
+      "path": "specs\\1-2025-10-28-claude-task-master-vs-spec-kit-comparison-doc-2025-00085",
+      "status": "proposed"
+    },
+    {
+      "id": 2,
+      "slug": "2025-10-28-multi-agent-speckit-implementation-doc-2025-00086",
+      "path": "specs\\2-2025-10-28-multi-agent-speckit-implementation-doc-2025-00086",
+      "status": "proposed"
+    },
+    {
+      "id": 3,
+      "slug": "tiered-architecture",
+      "path": "specs\\003-tiered-architecture",
+      "status": "proposed"
+    }
+  ]
 }
-

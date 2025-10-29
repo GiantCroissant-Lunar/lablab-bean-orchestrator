@@ -16,4 +16,3 @@ repos:
         entry: bash -lc 'dotnet tool restore >/dev/null 2>&1 || true; dotnet format --verify-no-changes'
         types_or: [csharp]
         pass_filenames: false
-

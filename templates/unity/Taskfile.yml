@@ -24,4 +24,3 @@ tasks:
   lint:
     desc: Run all Unity linters (no Unity required)
     deps: [lint:meta, lint:editor, lint:lfs]
-

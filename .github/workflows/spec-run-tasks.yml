@@ -33,4 +33,3 @@ jobs:
           LABLAB_SPECS_BASE: /srv/specs
         run: |
           python3 agents/langgraph/run_tasks.py --spec "${{ inputs.spec_id }}" --slug "${{ inputs.slug }}" --repo "${{ inputs.repo }}"
-

@@ -1,0 +1,7 @@
+﻿extends: default
+rules:
+  line-length:
+    max: 180
+    allow-non-breakable-words: true
+  truthy:
+    allowed-values: ['true', 'false', 'on', 'off', 'yes', 'no']

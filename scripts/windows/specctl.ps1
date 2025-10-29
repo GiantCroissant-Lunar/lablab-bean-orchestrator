@@ -22,4 +22,3 @@ $script = "cd '$($env:LABLAB_ORCH_DIR)' && bash scripts/mac/specctl.sh $Command 
 
 Write-Host "[ssh] $remote => $script"
 ssh $remote $script
-
