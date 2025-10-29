@@ -137,13 +137,23 @@ jobs:
           fi
           git push -u origin "$BRANCH" || true
 
-      - name: Open Draft PR
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.LABLAB_GH_PAT }}
-          path: target
-          branch: ${{ env.BRANCH }}
-          title: "[SPEC ${SPEC_ID}] ${SLUG} (${REPO})"
-          body: |
-            Auto-created by orchestrator. This PR syncs spec docs and initial config.
-          draft: true
+      - name: Open Draft PR via API
+        env:
+          GH_TOKEN: ${{ secrets.LABLAB_GH_PAT }}
+        run: |
+          set -euxo pipefail
+          TITLE="[SPEC ${SPEC_ID}] ${SLUG} (${REPO})"
+          BODY="Auto-created by orchestrator. This PR syncs spec docs and initial config."
+          DATA=$(jq -n \
+            --arg t "$TITLE" \
+            --arg h "$BRANCH" \
+            --arg b "$BASE" \
+            --arg body "$BODY" \
+            '{title:$t, head:$h, base:$b, body:$body, draft:true}')
+          curl -s -o resp.json -w '%{http_code}' \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${ORG}/${REPO}/pulls \
+            -d "$DATA" | tee status.txt
+          code=$(cat status.txt)
+          test "$code" = "201" -o "$code" = "200" || { echo "Open PR failed: $(cat resp.json)"; exit 1; }
