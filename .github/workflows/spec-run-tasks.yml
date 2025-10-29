@@ -32,4 +32,4 @@ jobs:
           GLM_MODEL: ${{ vars.GLM_MODEL }}
           LABLAB_SPECS_BASE: /srv/specs
         run: |
-          python3 agents/langgraph/run_tasks.py --spec "${{ inputs.spec_id }}" --slug "${{ inputs.slug }}" --repo "${{ inputs.repo }}"
+          python -m agents.langgraph.run_tasks --spec "${{ inputs.spec_id }}" --slug "${{ inputs.slug }}" --repo "${{ inputs.repo }}"
