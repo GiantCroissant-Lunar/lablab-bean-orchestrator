@@ -4,7 +4,7 @@ vars:
   PY: python
 
 tasks:
-  venv:create:
+  "venv:create":
     desc: Create virtual environment at .venv
     cmds:
       - "{{.PY}} -m venv .venv"
@@ -13,7 +13,7 @@ tasks:
 
   install:
     desc: Install deps via pip (requirements.txt if present)
-    deps: [venv:create]
+    deps: ["venv:create"]
     cmds:
       - "{{.PY}} -m pip install --upgrade pip"
       - |
@@ -43,7 +43,7 @@ tasks:
           echo "No tests detected"; \
         fi
 
-  precommit:install:
+  "precommit:install":
     desc: Install pre-commit hook
     cmds:
       - pre-commit install

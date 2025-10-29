@@ -36,12 +36,8 @@ jobs:
         run: |
           REPOS='${{ inputs.repos }}'
           if [ "${{ github.event_name }}" = "issue_comment" ]; then REPOS='${{ steps.parse-comment.outputs.repos }}'; fi
-          JSON=$(python3 - <<'PY'
-import os, json
-repos = [r.strip() for r in os.environ['REPOS'].split(',') if r.strip()]
-print(json.dumps({'include':[{'repo':r} for r in repos]}))
-PY
-          )
+          JSON=$(python3 -c 'import os, json; repos=[r.strip() for r in os.environ.get("REPOS",""
+          ).split(",") if r.strip()]; print(json.dumps({"include":[{"repo":r} for r in repos]}))')
           echo "matrix=$JSON" >> $GITHUB_OUTPUT
 
   dryrun:
@@ -68,15 +64,8 @@ PY
         run: |
           test -n "$GH_TOKEN" || { echo "LABLAB_GH_PAT secret not set"; exit 1; }
           curl -s -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/${ORG}/${REPO} > resp.json
-          echo "Response snippet:" && cat resp.json | sed -n '1,40p'
-          python3 - <<'PY'
-import json
-data=json.load(open('resp.json'))
-perms=data.get('permissions') or {}
-if not perms.get('push', False):
-    raise SystemExit('Token does not have push permission for this repo')
-print('Push permission OK')
-PY
+          echo "Response snippet:" && sed -n '1,40p' resp.json
+          python3 -c "import json,sys; d=json.load(open('resp.json')); p=(d.get('permissions') or {}).get('push', False); print('Push permission OK' if p else ''); sys.exit(0 if p else 1)"
 
       - name: Report success for repo
         run: echo "Dry-run OK for ${REPO}"

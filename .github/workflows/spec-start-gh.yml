@@ -55,12 +55,8 @@ jobs:
             if [ -n "$RS" ]; then REPOS="$RS"; fi
           fi
           # Produce a JSON array for matrix
-          JSON=$(python3 - <<'PY'
-import json, os
-repos = [r.strip() for r in os.environ['REPOS'].split(',') if r.strip()]
-print(json.dumps({"include": [{"repo": r} for r in repos]}))
-PY
-          )
+          JSON=$(python3 -c 'import os, json; repos=[r.strip() for r in os.environ.get("REPOS",""
+          ).split(",") if r.strip()]; print(json.dumps({"include":[{"repo":r} for r in repos]}))')
           echo "matrix=$JSON" >> $GITHUB_OUTPUT
 
     outputs:

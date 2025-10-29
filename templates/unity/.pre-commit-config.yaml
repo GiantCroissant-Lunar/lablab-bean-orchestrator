@@ -14,17 +14,17 @@ repos:
   - repo: local
     hooks:
       - id: unity-check-meta-pairs
-        name: Unity: ensure .meta pairs
+        name: "Unity: ensure .meta pairs"
         entry: python3 scripts/precommit/unity/check_meta_pairs.py
         language: system
         files: ^Assets/|^ProjectSettings/
       - id: unity-check-editor-settings
-        name: Unity: enforce text serialization + visible meta
+        name: "Unity: enforce text serialization + visible meta"
         entry: python3 scripts/precommit/unity/check_editor_settings.py
         language: system
         files: ^ProjectSettings/EditorSettings\.asset$
       - id: check-lfs-large
-        name: LFS: large files must be LFS-tracked
+        name: "LFS: large files must be LFS-tracked"
         entry: python3 scripts/precommit/common/check_lfs.py
         language: system
         pass_filenames: false

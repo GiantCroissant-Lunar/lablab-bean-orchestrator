@@ -1,26 +1,26 @@
 version: '3'
 
 tasks:
-  precommit:install:
+  "precommit:install":
     desc: Install pre-commit hook
     cmds:
       - pre-commit install
 
-  lint:meta:
+  "lint:meta":
     desc: Check Unity .meta file pairs
     cmds:
       - python3 scripts/precommit/unity/check_meta_pairs.py
 
-  lint:editor:
+  "lint:editor":
     desc: Enforce EditorSettings (Force Text, Visible Meta Files)
     cmds:
       - python3 scripts/precommit/unity/check_editor_settings.py
 
-  lint:lfs:
+  "lint:lfs":
     desc: Ensure large files are LFS-tracked (>= 5MB)
     cmds:
       - python3 scripts/precommit/common/check_lfs.py
 
   lint:
     desc: Run all Unity linters (no Unity required)
-    deps: [lint:meta, lint:editor, lint:lfs]
+    deps: ["lint:meta", "lint:editor", "lint:lfs"]
