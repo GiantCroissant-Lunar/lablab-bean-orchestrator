@@ -1,0 +1,19 @@
+# tasks.yaml — inspired by spec-kit tasking
+# Each task has: id, title, repo, stage, type, detail
+
+- id: T-1
+  title: Create endpoint /login
+  repo: lablab-bean
+  stage: implement
+  type: code
+  detail: |
+    Add FastAPI POST /login, validate credentials, return token.
+
+- id: T-2
+  title: CLI login command
+  repo: lablab-bean-console
+  stage: implement
+  type: code
+  detail: |
+    Add `bean login` command to call core API and store token.
+

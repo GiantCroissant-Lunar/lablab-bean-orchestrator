@@ -1,0 +1,52 @@
+name: Start Spec
+
+on:
+  workflow_dispatch:
+    inputs:
+      spec_id:
+        description: "Spec ID"
+        required: true
+      slug:
+        description: "Slug (e.g., login)"
+        required: true
+      repos:
+        description: "Comma-separated repos (e.g., lablab-bean,lablab-bean-console)"
+        required: true
+      base_branch:
+        description: "Base branch"
+        required: false
+        default: "main"
+
+jobs:
+  start:
+    runs-on: [self-hosted, macOS, spec]
+    steps:
+      - name: Checkout orchestrator
+        uses: actions/checkout@v4
+
+      - name: Print inputs
+        run: |
+          echo SPEC_ID=${{ inputs.spec_id }}
+          echo SLUG=${{ inputs.slug }}
+          echo REPOS=${{ inputs.repos }}
+          echo BASE=${{ inputs.base_branch }}
+
+      - name: Ensure deps
+        run: |
+          command -v git
+          command -v jq
+          git --version
+          jq --version
+
+      - name: Start spec
+        env:
+          LABLAB_ORG: ${{ vars.LABLAB_ORG }}
+          LABLAB_REPOS_BASE: ${{ vars.LABLAB_REPOS_BASE }}
+          LABLAB_SPECS_BASE: ${{ vars.LABLAB_SPECS_BASE }}
+        run: |
+          bash scripts/mac/specctl.sh start \
+            --spec "${{ inputs.spec_id }}" \
+            --slug "${{ inputs.slug }}" \
+            --repos "${{ inputs.repos }}" \
+            --base "${{ inputs.base_branch }}"
+

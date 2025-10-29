@@ -1,0 +1,89 @@
+version: '3'
+
+vars:
+  SPEC_ID: ''
+  SLUG: ''
+  REPOS: ''
+  BASE: main
+
+tasks:
+  spec:start:
+    desc: Start spec environments (worktrees + optional containers)
+    cmds:
+      - bash scripts/mac/specctl.sh start --spec "{{.SPEC_ID}}" --slug "{{.SLUG}}" --repos "{{.REPOS}}" --base "{{.BASE}}"
+    silent: false
+
+  spec:status:
+    desc: Status of spec environments
+    cmds:
+      - bash scripts/mac/specctl.sh status --spec "{{.SPEC_ID}}" --slug "{{.SLUG}}" --repos "{{.REPOS}}" --base "{{.BASE}}"
+
+  spec:stop:
+    desc: Stop spec environments and remove worktrees
+    cmds:
+      - bash scripts/mac/specctl.sh stop --spec "{{.SPEC_ID}}" --slug "{{.SLUG}}" --repos "{{.REPOS}}"
+
+  bootstrap:unity:
+    desc: Apply Unity templates (hooks, LFS, editorconfig)
+    vars:
+      PATH: ''
+    cmds:
+      - bash scripts/mac/bootstrap-repo.sh --type unity --path "{{.PATH}}"
+
+  bootstrap:dotnet:
+    desc: Apply .NET templates (hooks, editorconfig)
+    vars:
+      PATH: ''
+    cmds:
+      - bash scripts/mac/bootstrap-repo.sh --type dotnet --path "{{.PATH}}"
+
+  bootstrap:python:
+    desc: Apply Python templates (hooks, editorconfig)
+    vars:
+      PATH: ''
+    cmds:
+      - bash scripts/mac/bootstrap-repo.sh --type python --path "{{.PATH}}"
+  spec:bootstrap:
+    desc: Apply templates to existing worktrees for a spec
+    cmds:
+      - bash scripts/mac/specctl.sh bootstrap --spec "{{.SPEC_ID}}" --slug "{{.SLUG}}" --repos "{{.REPOS}}"
+  spec:check:
+    desc: Verify remotes, base branches, and container prerequisites
+    cmds:
+      - bash scripts/mac/specctl.sh check --spec "{{.SPEC_ID}}" --slug "{{.SLUG}}" --repos "{{.REPOS}}" --base "{{.BASE}}"
+  spec:import:
+    desc: Import .md specs from a source folder into registry
+    vars:
+      SRC: ''
+      REPOS: lablab-bean
+    cmds:
+      - python3 scripts/py/import_specs.py --src "{{.SRC}}" --default-repos "{{.REPOS}}"
+  spec:new:
+    desc: Create a new spec folder with templates and registry entry
+    vars:
+      SLUG: ''
+      REPOS: lablab-bean
+      TITLE: ''
+    cmds:
+      - python3 scripts/py/new_spec.py --slug "{{.SLUG}}" --repos "{{.REPOS}}" --title "{{.TITLE}}"
+  spec:kit:create:
+    desc: Spec-Kit style create (local shim)
+    vars:
+      SLUG: ''
+      REPOS: lablab-bean
+      TITLE: ''
+    cmds:
+      - python3 scripts/py/spec_kit_compat.py create --slug "{{.SLUG}}" --repos "{{.REPOS}}" --title "{{.TITLE}}"
+
+  spec:kit:add-task:
+    desc: Add a task to tasks.yaml (local shim)
+    vars:
+      SPEC: ''
+      SLUG: ''
+      REPO: ''
+      TITLE: ''
+      DETAIL: ''
+      STAGE: implement
+    cmds:
+      - python3 scripts/py/spec_kit_compat.py add-task --spec "{{.SPEC}}" --slug "{{.SLUG}}" --repo "{{.REPO}}" --title "{{.TITLE}}" --detail "{{.DETAIL}}" --stage "{{.STAGE}}"
+

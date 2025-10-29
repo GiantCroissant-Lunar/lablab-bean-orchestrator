@@ -1,0 +1,6 @@
+langchain
+langgraph
+pre-commit
+taskipy
+jq
+

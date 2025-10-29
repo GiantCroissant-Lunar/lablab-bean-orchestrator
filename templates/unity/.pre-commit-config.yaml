@@ -1,0 +1,32 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: check-yaml
+      - id: check-json
+
+  - repo: local
+    hooks:
+      - id: unity-check-meta-pairs
+        name: Unity: ensure .meta pairs
+        entry: python3 scripts/precommit/unity/check_meta_pairs.py
+        language: system
+        files: ^Assets/|^ProjectSettings/
+      - id: unity-check-editor-settings
+        name: Unity: enforce text serialization + visible meta
+        entry: python3 scripts/precommit/unity/check_editor_settings.py
+        language: system
+        files: ^ProjectSettings/EditorSettings\.asset$
+      - id: check-lfs-large
+        name: LFS: large files must be LFS-tracked
+        entry: python3 scripts/precommit/common/check_lfs.py
+        language: system
+        pass_filenames: false
+        stages: [commit]
+

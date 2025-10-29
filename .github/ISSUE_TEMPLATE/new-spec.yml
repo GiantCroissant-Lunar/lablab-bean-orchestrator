@@ -1,0 +1,47 @@
+name: New Spec
+description: Propose a new cross-repo spec
+title: "[SPEC] <short title>"
+labels: [spec, proposed]
+body:
+  - type: input
+    id: slug
+    attributes:
+      label: Slug
+      description: Short kebab-case identifier (e.g., login)
+      placeholder: login
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One-paragraph summary of the spec
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Repos affected and the intended changes per repo
+      placeholder: |
+        - lablab-bean: add login API and tests
+        - lablab-bean-console: wire login command
+        - lablab-bean-windows: UI login form
+        - lablab-bean-unity: none
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Bullet list of verifiable outcomes
+      placeholder: |
+        - [ ] API endpoint POST /login with 200/401
+        - [ ] CLI command returns token on success
+        - [ ] Windows UI validates input and shows errors
+  - type: input
+    id: repos
+    attributes:
+      label: Repos (comma-separated)
+      placeholder: lablab-bean,lablab-bean-console
+    validations:
+      required: true
+

@@ -1,0 +1,109 @@
+name: Spec-Kit Style Create
+
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: Slug (kebab-case)
+        required: true
+      repos:
+        description: Comma-separated repos (e.g., lablab-bean,lablab-bean-console)
+        required: true
+      title:
+        description: Optional title
+        required: false
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-from-comment:
+    if: github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/spec create')
+    runs-on: [self-hosted, macOS, spec]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure tools
+        run: |
+          command -v python3
+          command -v jq
+
+      - name: Parse comment
+        id: parse
+        run: |
+          BODY="${{ github.event.comment.body }}"
+          # Expected format: /spec create slug=login repos=lablab-bean,lablab-bean-console title="My Title"
+          SLUG=$(echo "$BODY" | sed -n 's/.*slug=\([^ ]*\).*/\1/p')
+          REPOS=$(echo "$BODY" | sed -n 's/.*repos=\([^ ]*\).*/\1/p')
+          TITLE=$(echo "$BODY" | sed -n 's/.*title=\"\([^\"]*\)\".*/\1/p')
+          if [ -z "$SLUG" ] || [ -z "$REPOS" ]; then
+            echo "Comment parse failed. Expected: /spec create slug=<slug> repos=<repo1,repo2> title=\"Optional Title\"" >&2
+            exit 1
+          fi
+          echo "slug=$SLUG" >> $GITHUB_OUTPUT
+          echo "repos=$REPOS" >> $GITHUB_OUTPUT
+          echo "title=$TITLE" >> $GITHUB_OUTPUT
+
+      - name: Create spec from template
+        run: |
+          python3 scripts/py/new_spec.py --slug "${{ steps.parse.outputs.slug }}" --repos "${{ steps.parse.outputs.repos }}" --title "${{ steps.parse.outputs.title }}"
+
+      - name: Compute branch
+        id: idslug
+        run: |
+          ID=$(jq -r '.specs|last|.id' specs/registry.json)
+          SLUG=$(jq -r '.specs|last|.slug' specs/registry.json)
+          echo "branch=spec-proposal/${ID}-${SLUG}" >> $GITHUB_OUTPUT
+          echo "title=[SPEC] ${SLUG}" >> $GITHUB_OUTPUT
+
+      - name: Create PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore(spec): add ${{ steps.idslug.outputs.branch }}"
+          branch: "${{ steps.idslug.outputs.branch }}"
+          title: "${{ steps.idslug.outputs.title }}"
+          body: |
+            Spec created from comment by @${{ github.actor }}.
+            Issue: #${{ github.event.issue.number }}
+          labels: spec, proposed
+
+  create-dispatch:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: [self-hosted, macOS, spec]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure tools
+        run: |
+          command -v python3
+          command -v jq
+
+      - name: Create spec from template
+        run: |
+          python3 scripts/py/new_spec.py --slug "${{ inputs.slug }}" --repos "${{ inputs.repos }}" --title "${{ inputs.title }}"
+
+      - name: Compute branch
+        id: idslug
+        run: |
+          ID=$(jq -r '.specs|last|.id' specs/registry.json)
+          SLUG=$(jq -r '.specs|last|.slug' specs/registry.json)
+          echo "branch=spec-proposal/${ID}-${SLUG}" >> $GITHUB_OUTPUT
+          echo "title=[SPEC] ${SLUG}" >> $GITHUB_OUTPUT
+
+      - name: Create PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore(spec): add ${{ steps.idslug.outputs.branch }}"
+          branch: "${{ steps.idslug.outputs.branch }}"
+          title: "${{ steps.idslug.outputs.title }}"
+          body: |
+            Spec created via workflow dispatch by @${{ github.actor }}.
+          labels: spec, proposed
+

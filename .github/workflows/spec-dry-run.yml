@@ -1,0 +1,64 @@
+name: Spec Dry Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      repos:
+        description: "Comma-separated repos (e.g., lablab-bean,lablab-bean-console)"
+        required: true
+      base_branch:
+        description: "Base branch"
+        required: false
+        default: "main"
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: set-matrix
+        run: |
+          REPOS='${{ inputs.repos }}'
+          JSON=$(python3 - <<'PY'
+import os, json
+repos = [r.strip() for r in os.environ['REPOS'].split(',') if r.strip()]
+print(json.dumps({'include':[{'repo':r} for r in repos]}))
+PY
+          )
+          echo "matrix=$JSON" >> $GITHUB_OUTPUT
+
+  dryrun:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+    env:
+      ORG: ${{ vars.LABLAB_ORG }}
+      REPO: ${{ matrix.repo }}
+      BASE: ${{ inputs.base_branch }}
+    steps:
+      - name: Check base branch exists
+        run: |
+          git ls-remote --heads https://github.com/${ORG}/${REPO}.git ${BASE} | grep -q "refs/heads/${BASE}" || { echo "Missing base branch ${BASE} on ${REPO}"; exit 1; }
+
+      - name: Check PAT push permission via API
+        env:
+          GH_TOKEN: ${{ secrets.LABLAB_GH_PAT }}
+        run: |
+          test -n "$GH_TOKEN" || { echo "LABLAB_GH_PAT secret not set"; exit 1; }
+          curl -s -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/${ORG}/${REPO} > resp.json
+          echo "Response snippet:" && cat resp.json | sed -n '1,40p'
+          python3 - <<'PY'
+import json
+data=json.load(open('resp.json'))
+perms=data.get('permissions') or {}
+if not perms.get('push', False):
+    raise SystemExit('Token does not have push permission for this repo')
+print('Push permission OK')
+PY
+
+      - name: Report success for repo
+        run: echo "Dry-run OK for ${REPO}"

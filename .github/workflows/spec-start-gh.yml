@@ -1,0 +1,126 @@
+name: Start Spec (GitHub-hosted)
+
+on:
+  workflow_dispatch:
+    inputs:
+      spec_id:
+        description: "Spec ID"
+        required: true
+      slug:
+        description: "Slug (e.g., tiered-architecture)"
+        required: true
+      repos:
+        description: "Comma-separated repos (e.g., lablab-bean,lablab-bean-console)"
+        required: true
+      base_branch:
+        description: "Base branch"
+        required: false
+        default: "main"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  start:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        repo: [ ]
+    env:
+      ORG: ${{ vars.LABLAB_ORG }}
+      SPEC_ID: ${{ inputs.spec_id }}
+      SLUG: ${{ inputs.slug }}
+      BASE: ${{ inputs.base_branch }}
+    steps:
+      - name: Checkout orchestrator
+        uses: actions/checkout@v4
+
+      - name: Parse repo list and set matrix
+        id: set-matrix
+        run: |
+          REPOS='${{ inputs.repos }}'
+          # Produce a JSON array for matrix
+          JSON=$(python3 - <<'PY'
+import json, os
+repos = [r.strip() for r in os.environ['REPOS'].split(',') if r.strip()]
+print(json.dumps({"include": [{"repo": r} for r in repos]}))
+PY
+          )
+          echo "matrix=$JSON" >> $GITHUB_OUTPUT
+
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+
+  per-repo:
+    needs: start
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.start.outputs.matrix) }}
+    env:
+      ORG: ${{ vars.LABLAB_ORG }}
+      REPO: ${{ matrix.repo }}
+      SPEC_ID: ${{ inputs.spec_id }}
+      SLUG: ${{ inputs.slug }}
+      BASE: ${{ inputs.base_branch }}
+    steps:
+      - name: Checkout orchestrator
+        uses: actions/checkout@v4
+
+      - name: Checkout target repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.ORG }}/${{ env.REPO }}
+          token: ${{ secrets.LABLAB_GH_PAT }}
+          path: target
+          ref: ${{ env.BASE }}
+
+      - name: Create spec branch
+        working-directory: target
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          BR="spec/${SPEC_ID}-${SLUG}/${REPO}"
+          git checkout -b "$BR"
+          echo "BRANCH=$BR" >> $GITHUB_ENV
+
+      - name: Sync spec docs into repo (Spec-Kit layout)
+        run: |
+          set -euxo pipefail
+          SRC="specs/${SPEC_ID}-${SLUG}"
+          DST="target/specs/$(printf "%03d" ${SPEC_ID})-${SLUG}"
+          test -d "$SRC" || { echo "Spec folder not found: $SRC"; exit 1; }
+          mkdir -p "$DST"
+          rsync -a "$SRC/" "$DST/"
+
+      - name: Add tiers.json/schema for app repos
+        run: |
+          case "$REPO" in
+            lablab-bean-console|lablab-bean-windows|lablab-bean-unity)
+              mkdir -p target
+              cp templates/tiers/tiers.json target/tiers.json
+              cp templates/tiers/tiers.schema.json target/tiers.schema.json
+              ;;
+            *)
+              echo "No tiers.json for $REPO";;
+          esac
+
+      - name: Commit and push
+        working-directory: target
+        run: |
+          git add .
+          git commit -m "chore(spec): ${SPEC_ID}-${SLUG} sync spec docs and config"
+          git push -u origin "$BRANCH"
+
+      - name: Open Draft PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.LABLAB_GH_PAT }}
+          path: target
+          branch: ${{ env.BRANCH }}
+          title: "[SPEC ${SPEC_ID}] ${SLUG} (${REPO})"
+          body: |
+            Auto-created by orchestrator. This PR syncs spec docs and initial config.
+          draft: true

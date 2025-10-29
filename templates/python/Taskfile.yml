@@ -1,0 +1,50 @@
+version: '3'
+
+vars:
+  PY: python
+
+tasks:
+  venv:create:
+    desc: Create virtual environment at .venv
+    cmds:
+      - "{{.PY}} -m venv .venv"
+    status:
+      - test -d .venv
+
+  install:
+    desc: Install deps via pip (requirements.txt if present)
+    deps: [venv:create]
+    cmds:
+      - "{{.PY}} -m pip install --upgrade pip"
+      - |
+        if [ -f requirements.txt ]; then \
+          {{.PY}} -m pip install -r requirements.txt; \
+        else \
+          echo "No requirements.txt; skipping"; \
+        fi
+
+  lint:
+    desc: Ruff lint (and fix)
+    cmds:
+      - ruff check --fix .
+
+  format:
+    desc: Black format
+    cmds:
+      - black .
+
+  test:
+    desc: Run pytest if present
+    cmds:
+      - |
+        if [ -f pytest.ini ] || [ -f pyproject.toml ] || rg -q "def test_" -g "**/*.py"; then \
+          pytest -q; \
+        else \
+          echo "No tests detected"; \
+        fi
+
+  precommit:install:
+    desc: Install pre-commit hook
+    cmds:
+      - pre-commit install
+

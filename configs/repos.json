@@ -1,0 +1,30 @@
+{
+  "lablab-bean": {
+    "type": "dotnet",
+    "container": true,
+    "image": "mcr.microsoft.com/dotnet/sdk:8.0",
+    "ports": [],
+    "base_branch": "main"
+  },
+  "lablab-bean-console": {
+    "type": "dotnet",
+    "container": true,
+    "image": "mcr.microsoft.com/dotnet/sdk:8.0",
+    "ports": [],
+    "base_branch": "main"
+  },
+  "lablab-bean-windows": {
+    "type": "dotnet",
+    "container": false,
+    "image": null,
+    "ports": [],
+    "base_branch": "main"
+  },
+  "lablab-bean-unity": {
+    "type": "unity",
+    "container": false,
+    "image": null,
+    "ports": [],
+    "base_branch": "main"
+  }
+}
