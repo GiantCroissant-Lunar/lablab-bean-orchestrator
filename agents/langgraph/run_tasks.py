@@ -32,13 +32,50 @@ def main():
 
     root = Path(__file__).resolve().parents[2]
     spec_dir = root / "specs" / f"{args.spec}-{args.slug}"
-    tasks_md = spec_dir / "tasks.md"
-    if not tasks_md.exists():
-        raise SystemExit(f"No tasks.md found at {tasks_md}")
 
-    tasks_text = tasks_md.read_text(encoding="utf-8")
-    # Minimal parse: extract lines like "- [ ] T123 ..." for target repo context later if needed
-    # For now, pass the full tasks.md to the LLM for suggestions scoped to the chosen repo.
+    # Prefer Spec‑Kit tasks.yaml if present; fallback to tasks.md
+    tasks_yaml = spec_dir / "tasks.yaml"
+    tasks_md = spec_dir / "tasks.md"
+
+    context_blob = ""
+    if tasks_yaml.exists():
+        try:
+            tasks = yaml.safe_load(tasks_yaml.read_text(encoding="utf-8")) or []
+        except Exception as e:
+            raise SystemExit(f"Failed to parse {tasks_yaml}: {e}")
+
+        # Filter to the selected repo and stage 'implement' by default
+        filtered = []
+        for t in tasks:
+            if not isinstance(t, dict):
+                continue
+            repo_ok = (t.get("repo") == args.repo) if t.get("repo") else True
+            stage = (t.get("stage") or "").lower()
+            stage_ok = (stage in ("implement", "build", "code", ""))
+            if repo_ok and stage_ok:
+                filtered.append(t)
+
+        if not filtered:
+            # If nothing matched, fall back to all tasks for visibility
+            filtered = [t for t in tasks if isinstance(t, dict)]
+
+        lines = [
+            "Tasks (from tasks.yaml, filtered for repo where applicable):",
+        ]
+        for t in filtered:
+            tid = t.get("id", "T-?")
+            title = t.get("title", "")
+            repo = t.get("repo", "")
+            detail = t.get("detail", "")
+            stage = t.get("stage", "")
+            lines.append(f"- {tid} [{repo}] ({stage}) {title}\n  {detail}")
+        context_blob = "\n".join(lines)
+
+    elif tasks_md.exists():
+        # Pass through tasks.md for human-authored context
+        context_blob = tasks_md.read_text(encoding="utf-8")
+    else:
+        raise SystemExit(f"No tasks.yaml or tasks.md found in {spec_dir}")
     # Find worktree on the Mac host convention (/srv/specs/<id>/<repo>)
     worktree = Path(os.getenv("LABLAB_SPECS_BASE", "/srv/specs")) / args.spec / args.repo
 
@@ -47,7 +84,7 @@ def main():
     print("\n=== Suggested implementation plan for repo ===")
     messages = [
         {"role": "system", "content": "You are a helpful code assistant. Read tasks.md and propose concrete steps and code patches for ONLY the specified repository."},
-        {"role": "user", "content": f"Repository: {args.repo}\nWorktree: {worktree}\n\nTasks.md contents:\n\n{tasks_text}\n\nConstraints:\n- Only modify files under the repository worktree.\n- Prefer minimal diffs and small, verifiable steps.\n- Output proposed unified diffs where applicable."},
+        {"role": "user", "content": f"Repository: {args.repo}\nWorktree: {worktree}\n\nTasks context (YAML preferred, MD fallback):\n\n{context_blob}\n\nConstraints:\n- Only modify files under the repository worktree.\n- Prefer minimal diffs and small, verifiable steps.\n- Output proposed unified diffs where applicable."},
     ]
     resp = call_llm(messages)
     print(resp.get("content"))
