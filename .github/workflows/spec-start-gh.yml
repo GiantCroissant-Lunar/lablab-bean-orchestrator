@@ -16,6 +16,10 @@ on:
         description: "Base branch"
         required: false
         default: "main"
+      branch_suffix:
+        description: "Optional branch suffix to avoid conflicts (e.g., gh)"
+        required: false
+        default: ""
   issue_comment:
     types: [created]
 
@@ -35,6 +39,7 @@ jobs:
       SPEC_ID: ${{ inputs.spec_id }}
       SLUG: ${{ inputs.slug }}
       BASE: ${{ inputs.base_branch }}
+      SUFFIX: ${{ inputs.branch_suffix }}
     steps:
       - name: Checkout orchestrator
         uses: actions/checkout@v4
@@ -98,6 +103,7 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
           BR="spec/${SPEC_ID}-${SLUG}/${REPO}"
+          if [ -n "${SUFFIX}" ]; then BR="${BR}-${SUFFIX}"; fi
           git checkout -b "$BR"
           echo "BRANCH=$BR" >> $GITHUB_ENV
 
