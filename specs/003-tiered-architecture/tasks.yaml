@@ -1,0 +1,56 @@
+- id: T-1
+  title: Implement tier ranges and validation
+  repo: lablab-bean-console
+  stage: implement
+  type: code
+  detail: Define and load ranges from tiers.json; validate plugin priorities against
+    ranges; fail fast with plugin id and offending priority.
+- id: T-2
+  title: Deterministic loader ordering
+  repo: lablab-bean-console
+  stage: implement
+  type: code
+  detail: "Ordering: topo(deps) \u2192 tier order \u2192 in-tier priority (asc) \u2192\
+    \ name tie-break; log final resolved order with plugin id and priority."
+- id: T-3
+  title: Schema guardrails and CI
+  repo: lablab-bean-console
+  stage: implement
+  type: code
+  detail: Ensure tiers.schema.json captures structure/ranges; validation step runs
+    in main .NET CI.
+- id: T-4
+  title: Unit tests for ranges and ordering
+  repo: lablab-bean-console
+  stage: implement
+  type: code
+  detail: 'Tests: out-of-range priority, cross-tier deps, deterministic tie-breaks;
+    place under tests/.'
+- id: T-5
+  title: Implement tier ranges and validation
+  repo: lablab-bean-windows
+  stage: implement
+  type: code
+  detail: Define and load ranges from tiers.json; validate plugin priorities against
+    ranges; fail fast with plugin id and offending priority.
+- id: T-6
+  title: Deterministic loader ordering
+  repo: lablab-bean-windows
+  stage: implement
+  type: code
+  detail: "Ordering: topo(deps) \u2192 tier order \u2192 in-tier priority (asc) \u2192\
+    \ name tie-break; log final resolved order with plugin id and priority."
+- id: T-7
+  title: Schema guardrails and CI
+  repo: lablab-bean-windows
+  stage: implement
+  type: code
+  detail: Ensure tiers.schema.json captures structure/ranges; validation step runs
+    in main .NET CI.
+- id: T-8
+  title: Unit tests for ranges and ordering
+  repo: lablab-bean-windows
+  stage: implement
+  type: code
+  detail: 'Tests: out-of-range priority, cross-tier deps, deterministic tie-breaks;
+    place under tests/.'

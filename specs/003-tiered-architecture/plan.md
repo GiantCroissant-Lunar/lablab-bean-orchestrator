@@ -13,3 +13,8 @@
 - Notes
   - Place `tiers.json` and `tiers.schema.json` at repo root (console/windows). Document deviations.
   - Ordering: topo on deps → tier order → in-tier priority (asc) → name tie-break.
+
+
+## Agent Execution
+
+Use Spec Run Tasks to propose staged diffs per repo. Keep PRs in Draft until all tests pass and schema validation is green.
