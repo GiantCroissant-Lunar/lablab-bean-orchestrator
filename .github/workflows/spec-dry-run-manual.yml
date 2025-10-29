@@ -21,6 +21,7 @@ jobs:
       - id: set-matrix
         run: |
           REPOS='${{ inputs.repos }}'
+          export REPOS
           JSON=$(python3 -c 'import os, json; repos=[r.strip() for r in os.environ.get("REPOS",""
           ).split(",") if r.strip()]; print(json.dumps({"include":[{"repo":r} for r in repos]}))')
           echo "matrix=$JSON" >> $GITHUB_OUTPUT
