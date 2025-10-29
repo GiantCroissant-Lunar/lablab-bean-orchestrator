@@ -1,0 +1,77 @@
+name: Spec Apply (simple)
+
+on:
+  workflow_dispatch:
+    inputs:
+      spec_id:
+        description: "Spec ID (e.g., 003)"
+        required: true
+      repos:
+        description: "Optional CSV filter (e.g., lablab-bean-console)"
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.resolve.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Resolve matrix from spec (tasks.yaml)
+        id: resolve
+        env:
+          LABLAB_GH_PAT: ${{ secrets.LABLAB_GH_PAT }}
+          LABLAB_ORG: ${{ vars.LABLAB_ORG }}
+        run: |
+          JSON=$(python scripts/py/resolve_apply.py --spec-id "${{ inputs.spec_id }}" --org "${LABLAB_ORG}" --repos "${{ inputs.repos }}")
+          echo "matrix=$JSON" >> $GITHUB_OUTPUT
+
+  apply:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+    env:
+      ORG: ${{ vars.LABLAB_ORG }}
+      SPEC: ${{ matrix.spec }}
+      SLUG: ${{ matrix.slug }}
+      REPO: ${{ matrix.repo }}
+      BRANCH: ${{ matrix.branch }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Checkout target repo at branch
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.ORG }}/${{ env.REPO }}
+          token: ${{ secrets.LABLAB_GH_PAT }}
+          path: target
+          ref: ${{ env.BRANCH }}
+      - name: Apply tasks via LLM patch
+        env:
+          GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+          GLM_BASE_URL: ${{ secrets.GLM_BASE_URL }}
+          GLM_MODEL: ${{ vars.GLM_MODEL }}
+        run: |
+          python -m agents.langgraph.apply_task --spec "${SPEC}" --slug "${SLUG}" --repo "${REPO}" --branch "${BRANCH}"
